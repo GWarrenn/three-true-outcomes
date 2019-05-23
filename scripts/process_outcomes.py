@@ -31,7 +31,7 @@ plays_df['anything_else'] = np.where(plays_df['true_outcome'] == 2,0,1)
 
 ## export coded data to check classifications -- the string values are a little strange
 
-plays_df[['game_id','inning','team','true_outcome','anything_else','play_str']].to_csv("C:/Users/august.warren/Downloads/retrosheet/checks.csv")
+plays_df[['game_id','inning','team','true_outcome','anything_else','play_str']].to_csv("data/checks.csv")
 
 ## collapse up to the inning level
 
@@ -47,7 +47,7 @@ agg_by_inning['true_outcome_result'] = agg_by_inning['true_outcome'] - agg_by_in
 ##
 #######################################
 
-games = "C:/Users/august.warren/Downloads/retrosheet/info.csv"
+games = "data/info.csv"
 
 games_df = pd.read_csv(games)
 
@@ -59,9 +59,22 @@ games_df['team'] = np.where(games_df['var'] == "hometeam",1,0)
 
 agg_by_inning = agg_by_inning.merge(games_df,how="inner",on=["game_id","team"])
 
-agg_by_game_team = agg_by_inning[['game_id','true_outcome_result',"value"]].groupby(['game_id','value']).sum().reset_index()
+agg_by_game_team = agg_by_inning[['game_id','true_outcome_result',"value","var"]].groupby(['game_id','var','value']).sum().reset_index()
 
-agg_by_game_team.pivot(['game_id','true_outcome_result'], columns='true_outcome_result', values='value')
+agg_by_game_team = agg_by_game_team.pivot(index='game_id', columns='var', values=['value','true_outcome_result']).reset_index()
+
+agg_by_game_team.columns = agg_by_game_team.columns.to_series().str.join('_')
+
+agg_by_game_team['true_outcome_result'] = agg_by_game_team['true_outcome_result_visteam'] + agg_by_game_team['true_outcome_result_hometeam']
+
+agg_by_game_team['match_up'] = agg_by_game_team['value_hometeam'] + " vs. " + agg_by_game_team['value_visteam']
+ 
+## calulcate number of days into season
+
+agg_by_game_team['str_date'] = agg_by_game_team['game_id_'].str.extract(pat=r'(201[0-9][0-9][0-9][0-9][0-9])')
+agg_by_game_team['fmt_date'] = pd.to_datetime(agg_by_game_team['str_date'])
+
+agg_by_game_team['days_since_season_start'] = agg_by_game_team['fmt_date'] - pd.to_datetime("2017-04-02")
 
 #######################################
 ##
@@ -69,5 +82,5 @@ agg_by_game_team.pivot(['game_id','true_outcome_result'], columns='true_outcome_
 ##
 #######################################
 
-agg_by_inning.to_csv("C:/Users/august.warren/Downloads/retrosheet/agg-inning-results.csv")
-agg_by_game.to_csv("C:/Users/august.warren/Downloads/retrosheet/agg-results.csv")
+agg_by_inning.to_csv("three-true-outcomes/data/agg-inning-results.csv",index=False)
+agg_by_game_team.to_csv("three-true-outcomes/data/agg-results.csv",index=False)
