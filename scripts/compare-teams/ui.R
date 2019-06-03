@@ -16,16 +16,18 @@ shinyUI(fluidPage(
   titlePanel("Three True Outcomes"),
   
   # Sidebar with a slider input for number of bins 
-  sidebarLayout(
-    sidebarPanel(
-      selectInput(inputId = "home_team_list", label = "Select Team", choices = NULL),
-      selectInput(inputId = "away_team_list", label = "Select Team", choices = NULL)
+  fluidRow(
+    column(4,
+           selectInput(inputId = "home_team_list", label = "Select Team", choices = NULL)),
+    column(4,
+           selectInput(inputId = "away_team_list", label = "Select Team", choices = NULL))
       
     ),
     
     # Show a plot of the generated distribution
     mainPanel(
-       plotOutput("distPlot")
+       plotOutput("distPlot"),
+       htmlOutput("results")
     )
   )
-))
+)
